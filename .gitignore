@@ -32,3 +32,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI Agents & Skills
+.agents/
+.claude/
+.qoder/
+.trae/
+.windsurf/
+.zencoder/
+
+# Markdown Files (keep README.md)
+*.md
+!README.md
+!README.md*
