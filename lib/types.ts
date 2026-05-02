@@ -30,6 +30,8 @@ export interface PathStage {
 
 export interface Settings {
   name: string;
+  email?: string;
+  onboarded?: boolean;
   theme: 'dark' | 'darker';
   startDate: string;
   preTaskReminders?: boolean;

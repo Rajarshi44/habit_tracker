@@ -165,12 +165,14 @@ export default function TodayView() {
               <Link href="/settings" className="px-5 py-2.5 bg-[var(--surface-3)] text-[var(--text-primary)] font-mono text-xs tracking-wider uppercase rounded-lg border border-[var(--border-bright)] hover:border-emerald-500 hover:text-emerald-500 transition-all">
                 Initialize Protocol
               </Link>
-              <button 
-                onClick={loadTemplate}
-                className="px-5 py-2.5 bg-emerald-500/10 text-emerald-500 font-mono text-xs tracking-wider uppercase rounded-lg border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
-              >
-                Load Developer Template
-              </button>
+              {settings.email === 'mrajarshi570@gmail.com' && (
+                <button 
+                  onClick={loadTemplate}
+                  className="px-5 py-2.5 bg-emerald-500/10 text-emerald-500 font-mono text-xs tracking-wider uppercase rounded-lg border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
+                >
+                  Load Developer Template
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -178,11 +180,13 @@ export default function TodayView() {
             {tasks.map((task) => {
             const displayTask = { ...task };
             if (task.path) {
-              displayTask.name = `Web Dev: ${currentStageName}`;
+              displayTask.name = `${task.name}: ${currentStageName}`;
             }
             if (task.rotating) {
               const { current } = getCollegeSubject(now);
-              displayTask.subtitle = current;
+              if (current !== 'None') {
+                 displayTask.name = `${task.name}: ${current}`;
+              }
             }
             return <TaskCard key={task.id} task={displayTask} dateStr={dateStr} />;
           })}

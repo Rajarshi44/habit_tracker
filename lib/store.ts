@@ -17,7 +17,9 @@ export const useHabitStore = create<HabitStore>()(
       streaks: TASKS.reduce((acc, task) => ({ ...acc, [task.id]: 0 }), {}),
       bestStreaks: TASKS.reduce((acc, task) => ({ ...acc, [task.id]: 0 }), {}),
       settings: {
-        name: 'Rajarshi',
+        name: '',
+        email: '',
+        onboarded: false,
         theme: 'dark',
         startDate: new Date().toISOString(),
         preTaskReminders: true,

@@ -12,6 +12,7 @@ export function RoutineConfig() {
   const subjects = useHabitStore((s) => s.subjects) || [];
   const setTasks = useHabitStore((s) => s.setTasks);
   const setSubjects = useHabitStore((s) => s.setSubjects);
+  const settings = useHabitStore((s) => s.settings);
 
   const [subjInput, setSubjInput] = useState(subjects.join(', '));
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -51,7 +52,7 @@ export function RoutineConfig() {
   return (
     <div className="space-y-8">
       {/* Global Actions */}
-      {tasks.length === 0 && (
+      {tasks.length === 0 && settings.email === 'mrajarshi570@gmail.com' && (
         <div className="flex justify-end mb-4">
           <button 
             onClick={handleLoadTemplate}

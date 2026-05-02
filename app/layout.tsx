@@ -4,6 +4,7 @@ import './globals.css';
 import { clsx } from 'clsx';
 import { NotificationEngine } from '@/components/NotificationEngine';
 import { Sidebar } from '@/components/ui/Sidebar';
+import { AuthModal } from '@/components/ui/AuthModal';
 
 const mainFont = Space_Grotesk({ subsets: ['latin'], variable: '--font-main' });
 const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' });
@@ -28,6 +29,7 @@ export default function RootLayout({
           </main>
         </div>
         <NotificationEngine />
+        <AuthModal />
       </body>
     </html>
   );
