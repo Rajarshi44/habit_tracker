@@ -49,10 +49,32 @@ export function testNotification() {
         tag: 'test-notification',
       } as any);
     });
-  } else {
-    alert("Notifications are not allowed or supported by your browser.");
   }
 }
+
+export async function scheduleNotification(title: string, options: NotificationOptions, delayMs: number = 0) {
+  if (Notification.permission !== 'granted') return;
+
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      payload: {
+        title,
+        options,
+        delay: delayMs
+      }
+    });
+  } else {
+    // Fallback if SW is not controlling the page yet
+    if (delayMs > 0) {
+      setTimeout(() => {
+        new Notification(title, options);
+      }, delayMs);
+    } else {
+      new Notification(title, options);
+    }
+  }
+};
 
 export function syncScheduleToServiceWorker(settings: Settings) {
   if ('serviceWorker' in navigator && Notification.permission === 'granted') {

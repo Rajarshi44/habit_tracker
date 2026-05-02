@@ -85,7 +85,7 @@ export function SettingsView() {
         
         <SettingRow 
           title="AI Morning Briefing"
-          desc="Gemini-generated daily instruction at 7:50 AM."
+          desc="AI-generated daily instruction at 7:50 AM."
           checked={settings.aiMorningBriefingNotification ?? true}
           onChange={(checked) => updateSettings({ aiMorningBriefingNotification: checked })}
         />

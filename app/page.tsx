@@ -1,18 +1,41 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { TASKS } from '@/lib/constants';
+import { TASKS, PATH_STAGES } from '@/lib/constants';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { AICoachCard } from '@/components/ui/AICoachCard';
 import { QUOTES } from '@/lib/quotes';
 import { format } from 'date-fns';
-import { Settings } from 'lucide-react';
+import { Settings, RefreshCw, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useStreaks } from '@/hooks/useStreaks';
+import { useGemini } from '@/hooks/useGemini';
+import { useState, useEffect } from 'react';
+import { clsx } from 'clsx';
 
 export default function TodayView() {
-  const settings = useHabitStore((s) => s.settings);
+  const settings = useHabitStore((s) => s.settings);  
+  const allDays = useHabitStore((s) => s.days);
+  const pathState = useHabitStore((s) => s.path);
   const now = new Date();
   const dateStr = format(now, 'yyyy-MM-dd');
+  const { dayStreak } = useStreaks();
+  const { getSmartQuote, loading: quoteLoading } = useGemini();
+  const [geminiQuote, setQuote] = useState<string | null>(null);
+
+  const fetchQuote = async (force = false) => {
+    const res = await getSmartQuote({
+      streakSummary: `${dayStreak} days`,
+      recentRate: 80,
+      stage: 'Frontend Foundation',
+      dayName: format(now, 'EEEE'),
+    }, force);
+    setQuote(res);
+  };
+
+  useEffect(() => {
+    fetchQuote();
+  }, []);
   
   const getGreeting = () => {
     const hour = now.getHours();
@@ -23,93 +46,144 @@ export default function TodayView() {
   };
   
   // Calculate done tasks for today
-  const dayData = useHabitStore((s) => s.days[dateStr]) || {};
+  const dayData = allDays[dateStr] || {};
   const doneCount = TASKS.filter(t => dayData[t.id] === 'done').length;
   const pct = (doneCount / TASKS.length) * 100;
   
-  const quoteIndex = now.getDate() % QUOTES.length;
-  const quote = QUOTES[quoteIndex];
+  // Calculate best day stats
+  let bestDayCount = 0;
+  Object.values(allDays).forEach(day => {
+    const dailyDoneCount = TASKS.filter(t => day[t.id] === 'done').length;
+    if (dailyDoneCount > bestDayCount) {
+      bestDayCount = dailyDoneCount;
+    }
+  });
+
+  // Get active path stage name
+  const currentStageName = PATH_STAGES.find(s => s.id === pathState.current)?.name || 'Web Dev';
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
       
-      <header className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{getGreeting()}, {settings.name}.</h1>
-          <p className="text-[var(--text-secondary)] font-mono text-sm mt-1">
-            {format(now, 'EEEE, d MMMM yyyy')}
-          </p>
+      {/* SPLIT-GRID HERO */}
+      <header className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-end border-b border-[var(--border)] pb-8 pt-4">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-1.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+            <h1 className="text-[10px] font-mono leading-none tracking-[0.2em] text-[var(--text-secondary)] uppercase">Telemetry // Live</h1>
+          </div>
+          <div>
+            <p className="text-4xl md:text-5xl font-bold tracking-tighter leading-tight text-[var(--text-primary)]">
+              {getGreeting()},<br />{settings.name}.
+            </p>
+            <p className="text-[var(--text-secondary)] font-mono text-xs mt-3 uppercase tracking-[0.1em]">
+              {format(now, 'EEEE')} <span className="opacity-30 mx-2">|</span> {format(now, 'd MMM yyyy')}
+            </p>
+          </div>
         </div>
-        <Link href="/settings" className="p-2 rounded-full hover:bg-[var(--surface-3)] transition-colors text-[var(--text-secondary)]">
-          <Settings size={20} />
-        </Link>
+        
+        <div className="flex flex-col items-start md:items-end gap-6 justify-end">
+          <Link href="/settings" className="flex items-center justify-center p-2.5 bg-[var(--surface-2)] border border-[var(--border)] rounded text-[var(--text-secondary)] hover:text-emerald-500 hover:border-[var(--border-bright)] transition-colors">
+            <Settings size={16} strokeWidth={1.5} />
+          </Link>
+          
+          <div className="text-left md:text-right font-mono">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-widest mb-1.5">Daily Completion</div>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-bold text-emerald-500 tabular-nums">
+                {Math.round(pct)}<span className="text-lg text-[var(--text-secondary)]">%</span>
+              </span>
+              <div className="hidden sm:block w-24 h-1.5 bg-[var(--surface-2)] overflow-hidden">
+                <div 
+                  className="h-full bg-emerald-500 transition-all duration-1000 ease-out" 
+                  style={{ width: `${pct}%` }} 
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* AI ORACLE BRIEFING */}
       <AICoachCard />
 
-      {/* STATS OVERVIEW */}
-      <div className="flex gap-4 items-center p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
-        <div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" className="stroke-[var(--surface-3)]" strokeWidth="8" fill="none" />
-            <circle 
-              cx="50" cy="50" r="40" 
-              className="stroke-emerald-500 transition-all duration-1000 ease-out" 
-              strokeWidth="8" fill="none" strokeLinecap="round"
-              strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * pct) / 100}
-            />
-          </svg>
-          <div className="absolute flex flex-col items-center">
-            <span className="font-mono text-xl font-bold">{doneCount}/{TASKS.length}</span>
+      {/* STATS TELEMETRY ROW */}
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-bright)] border-y border-[var(--border)]">
+        <div className="flex flex-col p-4 md:p-6 bg-[var(--surface)]/20 hover:bg-[var(--surface-2)] transition-colors">
+          <span className="text-[var(--text-secondary)] text-[10px] font-mono uppercase tracking-[0.15em] mb-2">Active Streak</span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-bold text-3xl tabular-nums text-[var(--text-primary)]">{dayStreak}</span>
+            <span className="text-sm font-mono text-[var(--text-secondary)]">DAYS</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 flex-1">
-          <div className="flex flex-col">
-            <span className="text-[var(--text-secondary)] text-xs font-mono uppercase tracking-wider mb-1">🔥 Day Streak</span>
-            <span className="font-bold text-lg">12 days</span>
+        
+        <div className="flex flex-col p-4 md:p-6 bg-[var(--surface)]/20 hover:bg-[var(--surface-2)] transition-colors">
+          <span className="text-[var(--text-secondary)] text-[10px] font-mono uppercase tracking-[0.15em] mb-2">Executed Today</span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-bold text-3xl tabular-nums text-emerald-500">{doneCount}</span>
+            <span className="text-sm font-mono text-[var(--text-secondary)]">TASKS</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[var(--text-secondary)] text-xs font-mono uppercase tracking-wider mb-1">✓ Done Today</span>
-            <span className="font-bold text-lg">{doneCount}</span>
+        </div>
+
+        <div className="flex flex-col p-4 md:p-6 bg-[var(--surface)]/20 hover:bg-[var(--surface-2)] transition-colors">
+          <span className="text-[var(--text-secondary)] text-[10px] font-mono uppercase tracking-[0.15em] mb-2">Bypassed</span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-bold text-3xl tabular-nums text-orange-500">
+              {TASKS.filter(t => dayData[t.id] === 'skip').length}
+            </span>
+            <span className="text-sm font-mono text-[var(--text-secondary)]">TASKS</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[var(--text-secondary)] text-xs font-mono uppercase tracking-wider mb-1">→ Skipped</span>
-            <span className="font-bold text-lg">{TASKS.filter(t => dayData[t.id] === 'skip').length}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[var(--text-secondary)] text-xs font-mono uppercase tracking-wider mb-1">⚡ Best Day</span>
-            <span className="font-bold text-lg">6/6</span>
+        </div>
+
+        <div className="flex flex-col p-4 md:p-6 bg-[var(--surface)]/20 hover:bg-[var(--surface-2)] transition-colors">
+          <span className="text-[var(--text-secondary)] text-[10px] font-mono uppercase tracking-[0.15em] mb-2">Peak Capacity</span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-bold text-3xl tabular-nums text-[var(--text-primary)]">{bestDayCount}</span>
+            <span className="text-sm font-mono text-[var(--text-secondary)]">MAX</span>
           </div>
         </div>
       </div>
 
-      {/* SCHEDULE */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)] mb-4">Today's Schedule</h2>
-        {TASKS.map((task) => (
-          <TaskCard key={task.id} task={task} dateStr={dateStr} />
-        ))}
+      {/* SCHEDULE GRID */}
+      <section className="space-y-4">
+        <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-tertiary)] border-b border-[var(--border)] pb-2">Active Protocol</h2>
+        <div className="grid gap-3">
+          {TASKS.map((task) => {
+          const displayTask = { ...task };
+          if (task.path) {
+            displayTask.name = `Web Dev: ${currentStageName}`;
+          }
+          return <TaskCard key={task.id} task={displayTask} dateStr={dateStr} />;
+        })}
+        </div>
       </section>
 
-      {/* FOOTER WIDGETS */}
-      <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-[var(--border)]">
-        <div className="p-5 rounded-xl bg-[var(--surface)] border border-[var(--border-bright)]">
-          <p className="text-sm text-[var(--text-secondary)] mb-3">How's the grind today?</p>
-          <div className="flex justify-between">
-            {['😩', '😕', '😐', '🙂', '🔥'].map((emoji, i) => (
-              <button key={emoji} 
-                className="text-2xl hover:scale-125 transition-transform hover:bg-[var(--surface-3)] p-2 rounded-full"
-                onClick={() => useHabitStore.getState().setMood(dateStr, (i + 1) as any)}
-              >
-                {emoji}
-              </button>
-            ))}
+      {/* FOOTER WIDGETS (BENTO 2.0) */}
+      <div className="pt-8 border-t border-[var(--border)]">
+        {/* QUOTE MODULE */}
+        <div className="relative group overflow-hidden border border-[var(--border)] bg-[var(--surface)] rounded flex flex-col justify-center p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+          
+          <button 
+            onClick={() => fetchQuote(true)}
+            className="absolute top-4 right-4 p-1.5 text-[var(--text-tertiary)] hover:text-emerald-500 transition-colors z-10 bg-[var(--background)] border border-[var(--border)] rounded"
+            disabled={quoteLoading}
+            title="Refresh Directives"
+          >
+            <RefreshCw size={14} className={quoteLoading ? 'animate-spin' : ''} />
+          </button>
+
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={14} className="text-emerald-500" />
+            <h3 className="text-[10px] text-emerald-500 font-mono uppercase tracking-[0.15em]">Directive Payload</h3>
           </div>
-        </div>
-        <div className="p-5 rounded-xl bg-[var(--surface-2)] flex flex-col justify-center">
-          <p className="text-sm font-medium italic text-[var(--text-primary)]">"{quote.text}"</p>
-          <p className="text-xs text-[var(--text-tertiary)] mt-2 font-mono">— {quote.author}</p>
+          
+          <p className="text-base font-medium leading-relaxed text-[var(--text-primary)] max-w-[90%]">
+            {quoteLoading && !geminiQuote 
+              ? "Synthesizing variables..." 
+              : `"${geminiQuote || "Discipline equals freedom. Automate your execution."}"`
+            }
+          </p>
         </div>
       </div>
 

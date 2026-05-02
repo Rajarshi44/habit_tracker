@@ -49,16 +49,7 @@ export const useHabitStore = create<HabitStore>()(
             },
           };
         }),
-      setMood: (date: string, mood: 1 | 2 | 3 | 4 | 5) =>
-        set((state) => ({
-          days: {
-            ...state.days,
-            [date]: {
-              ...(state.days[date] || {}),
-              mood,
-            },
-          },
-        })),
+
       updatePath: (stageId: string, pct: number) =>
         set((state) => ({
           path: {

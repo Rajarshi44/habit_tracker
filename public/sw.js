@@ -18,6 +18,82 @@ self.addEventListener('activate', (event) => {
 let appSettings = null;
 let appSchedule = [];
 
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  const data = event.data.json();
+
+  const options = {
+    body: data.body,
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: '2'
+    },
+    actions: data.actions || []
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'GRIND Notification', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'mark_done') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window' }).then((clientList) => {
+        for (const client of clientList) {
+          client.postMessage({ type: 'MARK_DONE', payload: event.notification.data });
+        }
+      })
+    );
+  } else if (event.action === 'skip') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window' }).then((clientList) => {
+        for (const client of clientList) {
+          client.postMessage({ type: 'SKIP', payload: event.notification.data });
+        }
+      })
+    );
+  } else if (event.action === 'snooze') {
+    setTimeout(() => {
+      self.registration.showNotification(event.notification.title, {
+        body: event.notification.body,
+        icon: '/icon-192x192.png'
+      });
+    }, 10 * 60 * 1000);
+  } else {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window' }).then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes('/') && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow('/');
+        }
+      })
+    );
+  }
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
+    const { title, options, delay } = event.data.payload;
+    if (delay && delay > 0) {
+      setTimeout(() => {
+        self.registration.showNotification(title, options);
+      }, delay);
+    } else {
+      self.registration.showNotification(title, options);
+    }
+  }
+});
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SYNC_SETTINGS') {
     appSettings = event.data.settings;

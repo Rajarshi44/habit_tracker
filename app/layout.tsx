@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { clsx } from 'clsx';
 import { NotificationEngine } from '@/components/NotificationEngine';
+import { Sidebar } from '@/components/ui/Sidebar';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const mainFont = Space_Grotesk({ subsets: ['latin'], variable: '--font-main' });
 const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' });
 
 export const metadata: Metadata = {
@@ -18,27 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={clsx(inter.variable, jbMono.variable, 'antialiased')}>
-        <div className="flex min-h-screen">
-          <aside className="hidden md:flex flex-col w-64 bg-[var(--surface)] border-r border-[var(--border)] p-4">
-            <div className="font-mono font-bold text-xl mb-8 tracking-wider">GRIND.</div>
-            <nav className="flex-1 space-y-2">
-              {['Today', 'Heatmap', 'Path', 'Insights', 'History'].map((item, i) => (
-                <div key={i} className={clsx(
-                  "px-4 py-3 rounded-lg text-sm cursor-pointer transition-colors",
-                  i === 0 ? "bg-[var(--surface-3)] text-white border-l-2 border-emerald-500" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--surface-2)]"
-                )}>
-                  {item}
-                </div>
-              ))}
-            </nav>
-            <div className="text-xs text-[var(--text-tertiary)] font-mono mt-auto">
-              grind v1 · routine locked<br/>
-              built with intention
-            </div>
-          </aside>
-          <main className="flex-1 max-w-3xl mx-auto p-6 pb-24 md:pb-6">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={clsx(mainFont.variable, jbMono.variable, 'antialiased bg-[var(--background)] text-[var(--text-primary)]')}>
+        <div className="flex min-h-[100dvh]">
+          <Sidebar />
+          <main className="flex-1 max-w-4xl mx-auto p-6 md:p-10 lg:p-12 pb-24 md:pb-12 w-full">
             {children}
           </main>
         </div>
