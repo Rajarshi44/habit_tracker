@@ -47,9 +47,12 @@ export function AuthModal() {
     return null;
   }
 
+  const [successMsg, setSuccessMsg] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
 
     if (mode === 'signup' && password !== confirmPassword) {
       setError('Passwords do not match');
@@ -68,25 +71,84 @@ export function AuthModal() {
 
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (mode === 'signup') {
+      // --- SIGN UP: store initial state with name to MongoDB, then switch to sign-in ---
+      try {
+        // Temporarily set cookie so the API route can identify the user
+        Cookies.set('grind_user', email.trim(), { expires: 365 });
 
-    // Set cookie for MongoDB API Route identification
+        // Build the initial state payload with the user's name
+        const initialSettings = {
+          name: name.trim(),
+          email: email.trim(),
+          onboarded: true,
+          theme: 'dark',
+          startDate: new Date().toISOString(),
+          preTaskReminders: true,
+          taskStartNotifications: true,
+          endReminders: true,
+          eveningCheckIn: true,
+          streakProtection: true,
+          midnightWarning: true,
+          weeklyReviewNotification: true,
+          streakMilestoneCelebrations: true,
+          pathMilestoneNotifications: true,
+          aiMorningBriefingNotification: true,
+        };
+
+        const statePayload = JSON.stringify({
+          state: {
+            tasks: [],
+            subjects: [],
+            pathStages: [],
+            days: {},
+            path: { current: '', pct: {}, completedDates: {} },
+            streaks: {},
+            bestStreaks: {},
+            settings: initialSettings,
+          },
+          version: 0,
+        });
+
+        await fetch('/api/store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state: statePayload }),
+        });
+
+        // Remove the cookie — they haven't signed in yet
+        Cookies.remove('grind_user');
+      } catch (err) {
+        console.error('Signup save error:', err);
+      }
+
+      setIsLoading(false);
+      setSuccessMsg('Account created! Please sign in.');
+      setMode('signin');
+      setPassword('');
+      setConfirmPassword('');
+      setName('');
+      return;
+    }
+
+    // --- SIGN IN: set cookie, rehydrate from DB, redirect ---
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     Cookies.set('grind_user', email.trim(), { expires: 365 });
 
-    // Rehydrate the store from MongoDB via custom adapter FIRST
-    // This loads their existing data (if any) into the Zustand store
+    // Rehydrate the store from MongoDB
     await useHabitStore.persist.rehydrate();
 
-    // Now update settings. If sign up, use what they typed. If sign in, keep their stored name or fallback.
+    // Use stored name from DB, fallback to email prefix
     const currentStoredName = useHabitStore.getState().settings.name;
     
     updateSettings({ 
-      name: mode === 'signup' ? name.trim() : (currentStoredName || email.split('@')[0]), 
+      name: currentStoredName || email.split('@')[0], 
       email: email.trim(), 
       onboarded: true 
     });
 
+    setIsLoading(false);
     setAuthModalOpen(false);
     if (pathname === '/') {
       window.location.href = '/dashboard';
@@ -232,6 +294,12 @@ export function AuthModal() {
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center animate-in fade-in zoom-in-95">
                 {error}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs text-center animate-in fade-in zoom-in-95">
+                {successMsg}
               </div>
             )}
 

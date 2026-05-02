@@ -11,8 +11,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is NOT logged in and tries to access protected routes, redirect to landing
-  const protectedPaths = ['/dashboard', '/settings', '/history', '/insights', '/heatmap', '/path'];
-  if (!userCookie && protectedPaths.some(p => pathname.startsWith(p))) {
+  if (!userCookie && (pathname.startsWith('/dashboard') || pathname.startsWith('/settings') || pathname.startsWith('/history') || pathname.startsWith('/insights') || pathname.startsWith('/heatmap'))) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -20,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/settings/:path*', '/history/:path*', '/insights/:path*', '/heatmap/:path*', '/path/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/settings/:path*', '/history/:path*', '/insights/:path*', '/heatmap/:path*'],
 };

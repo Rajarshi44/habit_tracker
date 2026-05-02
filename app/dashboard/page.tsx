@@ -1,7 +1,7 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { TASKS, SUBJECTS } from '@/lib/constants';
+import { TASKS, SUBJECTS, PATH_STAGES } from '@/lib/constants';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { AICoachCard } from '@/components/ui/AICoachCard';
 import { QUOTES } from '@/lib/quotes';
@@ -21,6 +21,9 @@ export default function TodayView() {
   const pathStages = useHabitStore((s) => s.pathStages) || [];
   const tasks = useHabitStore((s) => s.tasks);
   const setTasks = useHabitStore((s) => s.setTasks);
+  const setSubjects = useHabitStore((s) => s.setSubjects);
+  const setPathStages = useHabitStore((s) => s.setPathStages);
+  const setCurrentPathStage = useHabitStore((s) => s.setCurrentPathStage);
   const setMood = useHabitStore((s) => s.setMood);
   const now = new Date();
   const dateStr = format(now, 'yyyy-MM-dd');
@@ -70,6 +73,11 @@ export default function TodayView() {
 
   const loadTemplate = () => {
     setTasks(TASKS);
+    setSubjects(SUBJECTS);
+    setPathStages(PATH_STAGES);
+    if (PATH_STAGES.length > 0) {
+      setCurrentPathStage(PATH_STAGES[0].id);
+    }
   };
 
   return (
