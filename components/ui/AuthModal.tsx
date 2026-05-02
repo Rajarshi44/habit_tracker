@@ -89,7 +89,7 @@ export function AuthModal() {
 
     setAuthModalOpen(false);
     if (pathname === '/') {
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     }
   };
 
