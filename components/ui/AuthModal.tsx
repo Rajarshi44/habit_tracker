@@ -27,6 +27,7 @@ export function AuthModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [greeting, setGreeting] = useState('Welcome');
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -48,7 +49,6 @@ export function AuthModal() {
     return null;
   }
 
-  const [successMsg, setSuccessMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
