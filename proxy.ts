@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const userCookie = request.cookies.get('grind_user');
   const { pathname } = request.nextUrl;
 
@@ -11,7 +11,8 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is NOT logged in and tries to access protected routes, redirect to landing
-  if (!userCookie && (pathname.startsWith('/dashboard') || pathname.startsWith('/settings') || pathname.startsWith('/history') || pathname.startsWith('/insights') || pathname.startsWith('/heatmap'))) {
+  const protectedPaths = ['/dashboard', '/settings', '/history', '/insights', '/heatmap', '/path'];
+  if (!userCookie && protectedPaths.some(p => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -19,5 +20,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/settings/:path*', '/history/:path*', '/insights/:path*', '/heatmap/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/settings/:path*', '/history/:path*', '/insights/:path*', '/heatmap/:path*', '/path/:path*'],
 };
