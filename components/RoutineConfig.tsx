@@ -3,7 +3,8 @@
 import { useHabitStore } from '@/lib/store';
 import { useState } from 'react';
 import { Task } from '@/lib/types';
-import { Plus, Trash2, Save, X } from 'lucide-react';
+import { TASKS, SUBJECTS } from '@/lib/constants';
+import { Plus, Trash2, Save, X, Download } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export function RoutineConfig() {
@@ -39,8 +40,28 @@ export function RoutineConfig() {
     setEditingTask(null);
   };
 
+  const handleLoadTemplate = () => {
+    if (confirm('This will overwrite any current configuration with the default developer template. Proceed?')) {
+      setTasks(TASKS);
+      setSubjects(SUBJECTS);
+      setSubjInput(SUBJECTS.join(', '));
+    }
+  };
+
   return (
     <div className="space-y-8">
+      {/* Global Actions */}
+      {tasks.length === 0 && (
+        <div className="flex justify-end mb-4">
+          <button 
+            onClick={handleLoadTemplate}
+            className="px-4 py-2 bg-emerald-500/10 text-emerald-400 font-mono text-xs rounded hover:bg-emerald-500/20 transition-colors flex items-center gap-2"
+          >
+            <Download size={14} /> Load Developer Template
+          </button>
+        </div>
+      )}
+
       {/* Subjects Manager */}
       <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] space-y-4">
         <div>

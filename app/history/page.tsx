@@ -26,9 +26,9 @@ export default function HistoryPage() {
   
   const allLoggedDates = Object.keys(allDays).sort((a, b) => b.localeCompare(a));
 
-  const getEmoji = (mood?: number) => {
+  const getEmoji = (mood?: string | number) => {
     if (!mood) return null;
-    return ['😩', '😕', '😐', '🙂', '🔥'][mood - 1];
+    return ['😩', '😕', '😐', '🙂', '🔥'][Number(mood) - 1];
   };
 
   return (

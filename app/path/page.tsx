@@ -6,6 +6,7 @@ import { format, differenceInDays, addDays } from 'date-fns';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { Check, Lock, ChevronRight, Calendar } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PathPage() {
   const path = useHabitStore((s) => s.path);
@@ -134,28 +135,38 @@ export default function PathPage() {
 
       <section className="space-y-4 pt-4">
         <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)]">College Subject Rotation</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {subjects.map((subj) => (
-            <div 
-              key={subj}
-              className={clsx(
-                "p-5 rounded-2xl border border-[var(--border)] transition-colors relative overflow-hidden",
-                subj === todaySubject ? "bg-emerald-950/20 border-emerald-900/50" : "bg-[var(--surface)]"
-              )}
-            >
-              {subj === todaySubject && (
-                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-              )}
-              <h3 className="font-bold">{subj}</h3>
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
-                {subj === todaySubject ? "Today's Focus" : "Pending Rotation"}
-              </p>
-            </div>
-          ))}
-        </div>
+        {subjects.length === 0 ? (
+          <div className="p-8 border border-dashed border-[var(--border)] rounded-2xl text-center bg-[var(--surface)]/50">
+             <p className="text-[var(--text-secondary)] font-mono text-sm mb-4">No subjects defined. Please configure rotation in Settings.</p>
+             <Link href="/settings" className="inline-block px-5 py-2.5 bg-[var(--surface-3)] text-[var(--text-primary)] font-mono text-xs tracking-wider uppercase rounded-lg border border-[var(--border-bright)] hover:border-emerald-500 hover:text-emerald-500 transition-all">
+                Configure Subjects
+             </Link>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {subjects.map((subj) => (
+              <div 
+                key={subj}
+                className={clsx(
+                  "p-5 rounded-2xl border border-[var(--border)] transition-colors relative overflow-hidden",
+                  subj === todaySubject ? "bg-emerald-950/20 border-emerald-900/50" : "bg-[var(--surface)]"
+                )}
+              >
+                {subj === todaySubject && (
+                  <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+                )}
+                <h3 className="font-bold">{subj}</h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  {subj === todaySubject ? "Today's Focus" : "Pending Rotation"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 14 DAYS MINI CALENDAR */}
+      {subjects.length > 0 && (
       <section className="space-y-4 pt-4">
         <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)] flex items-center gap-2">
           <Calendar size={14} /> Next 14 Days
@@ -180,6 +191,7 @@ export default function PathPage() {
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 }

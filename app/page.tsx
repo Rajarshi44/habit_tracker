@@ -1,7 +1,7 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { PATH_STAGES } from '@/lib/constants';
+import { PATH_STAGES, TASKS, SUBJECTS } from '@/lib/constants';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { AICoachCard } from '@/components/ui/AICoachCard';
 import { QUOTES } from '@/lib/quotes';
@@ -20,6 +20,8 @@ export default function TodayView() {
   const pathState = useHabitStore((s) => s.path);
   const tasks = useHabitStore((s) => s.tasks);
   const subjects = useHabitStore((s) => s.subjects);
+  const setTasks = useHabitStore((s) => s.setTasks);
+  const setSubjects = useHabitStore((s) => s.setSubjects);
   const setMood = useHabitStore((s) => s.setMood);
   const now = new Date();
   const dateStr = format(now, 'yyyy-MM-dd');
@@ -65,6 +67,11 @@ export default function TodayView() {
 
   // Get active path stage name
   const currentStageName = PATH_STAGES.find(s => s.id === pathState.current)?.name || 'Web Dev';
+
+  const loadTemplate = () => {
+    setTasks(TASKS);
+    setSubjects(SUBJECTS);
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
@@ -151,19 +158,36 @@ export default function TodayView() {
       {/* SCHEDULE GRID */}
       <section className="space-y-4">
         <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-tertiary)] border-b border-[var(--border)] pb-2">Active Protocol</h2>
-        <div className="grid gap-3">
-          {tasks.map((task) => {
-          const displayTask = { ...task };
-          if (task.path) {
-            displayTask.name = `Web Dev: ${currentStageName}`;
-          }
-          if (task.rotating) {
-            const { current } = getCollegeSubject(now);
-            displayTask.subtitle = current;
-          }
-          return <TaskCard key={task.id} task={displayTask} dateStr={dateStr} />;
-        })}
-        </div>
+        {tasks.length === 0 ? (
+          <div className="p-8 border border-dashed border-[var(--border)] rounded-2xl flex flex-col items-center justify-center text-center bg-[var(--surface)]/50">
+            <p className="text-[var(--text-secondary)] font-mono text-sm mb-6">No tasks defined for your routine.</p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/settings" className="px-5 py-2.5 bg-[var(--surface-3)] text-[var(--text-primary)] font-mono text-xs tracking-wider uppercase rounded-lg border border-[var(--border-bright)] hover:border-emerald-500 hover:text-emerald-500 transition-all">
+                Initialize Protocol
+              </Link>
+              <button 
+                onClick={loadTemplate}
+                className="px-5 py-2.5 bg-emerald-500/10 text-emerald-500 font-mono text-xs tracking-wider uppercase rounded-lg border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
+              >
+                Load Developer Template
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {tasks.map((task) => {
+            const displayTask = { ...task };
+            if (task.path) {
+              displayTask.name = `Web Dev: ${currentStageName}`;
+            }
+            if (task.rotating) {
+              const { current } = getCollegeSubject(now);
+              displayTask.subtitle = current;
+            }
+            return <TaskCard key={task.id} task={displayTask} dateStr={dateStr} />;
+          })}
+          </div>
+        )}
       </section>
 
       {/* FOOTER WIDGETS (BENTO 2.0) */}

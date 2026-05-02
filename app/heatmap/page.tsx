@@ -5,6 +5,7 @@ import { useHabitStore } from '@/lib/store';
 import { format, subDays, startOfWeek, isSameMonth } from 'date-fns';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function HeatmapPage() {
   const allDays = useHabitStore((s) => s.days);
@@ -79,50 +80,62 @@ export default function HeatmapPage() {
       <div className="flex flex-col w-full overflow-hidden">
         <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-tertiary)] border-b border-[var(--border)] pb-2 mb-6">Overall Completion Matrix</h2>
         
-        <div className="relative w-full overflow-x-auto pb-6 scrollbar-thin">
-          <div className="min-w-max relative">
-            {/* MONTH LABELS */}
-            <div className="flex h-6 relative w-full mb-1">
-              {monthLabels.map((lbl, idx) => (
-                <div 
-                  key={idx} 
-                  className="absolute text-[10px] font-mono text-[var(--text-tertiary)]"
-                  style={{ left: `${lbl.colIndex * 15}px`, width: '15px' }}
-                >
-                  {lbl.label}
-                </div>
-              ))}
-            </div>
-
-            {/* HEATMAP GRID */}
-            <div className="grid grid-rows-7 grid-flow-col gap-1 w-full relative">
-              {daysArray.map((day, i) => (
-                  <div 
-                    key={day.dateStr}
-                    title={day.dateStr}
-                    className={clsx(
-                      "w-[11px] h-[11px] rounded-sm transition-colors",
-                      getDayColor(day.dateStr),
-                      day.dateStr === format(today, 'yyyy-MM-dd') ? "border border-white/40" : "border border-black/10"
-                    )}
-                  />
-              ))}
-            </div>
+        {tasks.length === 0 ? (
+          <div className="p-8 border border-dashed border-[var(--border)] rounded-2xl text-center bg-[var(--surface)]/50 mb-8">
+             <p className="text-[var(--text-secondary)] font-mono text-sm mb-4">No tasks defined. Please initialize your protocol in Settings.</p>
+             <Link href="/settings" className="inline-block px-5 py-2.5 bg-[var(--surface-3)] text-[var(--text-primary)] font-mono text-xs tracking-wider uppercase rounded-lg border border-[var(--border-bright)] hover:border-emerald-500 hover:text-emerald-500 transition-all">
+                Initialize Protocol
+             </Link>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="relative w-full overflow-x-auto pb-6 scrollbar-thin">
+              <div className="min-w-max relative">
+                {/* MONTH LABELS */}
+                <div className="flex h-6 relative w-full mb-1">
+                  {monthLabels.map((lbl, idx) => (
+                    <div 
+                      key={idx} 
+                      className="absolute text-[10px] font-mono text-[var(--text-tertiary)]"
+                      style={{ left: `${lbl.colIndex * 15}px`, width: '15px' }}
+                    >
+                      {lbl.label}
+                    </div>
+                  ))}
+                </div>
 
-        <div className="flex items-center justify-start gap-2 mt-4 text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-widest">
-          <span>Sparse</span>
-          <div className="w-2.5 h-2.5 bg-[var(--surface-2)]"></div>
-          <div className="w-2.5 h-2.5 bg-emerald-950"></div>
-          <div className="w-2.5 h-2.5 bg-emerald-800"></div>
-          <div className="w-2.5 h-2.5 bg-emerald-600"></div>
-          <div className="w-2.5 h-2.5 bg-emerald-500"></div>
-          <span>Dense</span>
-        </div>
+                {/* HEATMAP GRID */}
+                <div className="grid grid-rows-7 grid-flow-col gap-1 w-full relative">
+                  {daysArray.map((day, i) => (
+                      <div 
+                        key={day.dateStr}
+                        title={day.dateStr}
+                        className={clsx(
+                          "w-[11px] h-[11px] rounded-sm transition-colors",
+                          getDayColor(day.dateStr),
+                          day.dateStr === format(today, 'yyyy-MM-dd') ? "border border-white/40" : "border border-black/10"
+                        )}
+                      />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-start gap-2 mt-4 text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-widest">
+              <span>Sparse</span>
+              <div className="w-2.5 h-2.5 bg-[var(--surface-2)]"></div>
+              <div className="w-2.5 h-2.5 bg-emerald-950"></div>
+              <div className="w-2.5 h-2.5 bg-emerald-800"></div>
+              <div className="w-2.5 h-2.5 bg-emerald-600"></div>
+              <div className="w-2.5 h-2.5 bg-emerald-500"></div>
+              <span>Dense</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* PER-TASK MINI HEATMAPS */}
+      {tasks.length > 0 && (
       <div className="space-y-4 pt-4">
         <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-tertiary)] border-b border-[var(--border)] pb-2 mb-6">Execution Arrays (Per Task)</h2>
         <div className="grid gap-3">
@@ -154,6 +167,7 @@ export default function HeatmapPage() {
           ))}
         </div>
       </div>
+      )}
 
     </div>
   );

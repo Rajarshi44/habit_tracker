@@ -6,8 +6,8 @@ import { TASKS, SUBJECTS } from './constants';
 export const useHabitStore = create<HabitStore>()(
   persist(
     (set, get) => ({
-      tasks: TASKS,
-      subjects: SUBJECTS,
+      tasks: [],
+      subjects: [],
       days: {},
       path: {
         current: 'html',
