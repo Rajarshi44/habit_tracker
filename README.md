@@ -62,12 +62,7 @@ git clone https://github.com/Rajarshi44/habit_tracker.git
 cd habit_tracker
 npm install
 
-# 3. Create your .env file
-# You will need a MongoDB URI and a Gemini API Key
-echo "MONGODB_URI=your_mongodb_connection_string" > .env
-echo "NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_key" >> .env
-
-# 4. Start the development server
+# 3. Start the development server
 npm run dev
 ```
 
