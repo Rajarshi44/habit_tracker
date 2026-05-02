@@ -13,4 +13,6 @@ const UserStoreSchema: Schema = new Schema({
   timestamps: true,
 });
 
-export default mongoose.models.UserStore || mongoose.model<IUserStore>('UserStore', UserStoreSchema);
+const UserStore = (mongoose.models.UserStore as mongoose.Model<IUserStore>) || mongoose.model<IUserStore>('UserStore', UserStoreSchema);
+
+export default UserStore;
