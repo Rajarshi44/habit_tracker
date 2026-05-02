@@ -40,10 +40,10 @@ export function AuthModal() {
     return null;
   }
 
-  const isProtectedRoute = pathname !== '/';
+  // Show if user explicitly clicked a login button, OR if they're on a protected route while not onboarded
   const shouldShow = authModalOpen || (isProtectedRoute && !settings.onboarded);
 
-  if (!shouldShow || settings.onboarded) {
+  if (!shouldShow) {
     return null;
   }
 
