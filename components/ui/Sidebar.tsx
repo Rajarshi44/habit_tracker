@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { name: 'Today', href: '/' },
+  { name: 'Today', href: '/dashboard' },
   { name: 'Heatmap', href: '/heatmap' },
   { name: 'Path', href: '/path' },
   { name: 'Insights', href: '/insights' },
@@ -14,6 +14,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  if (pathname === '/') return null;
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-[var(--background)] border-r border-[var(--border)] p-6 shrink-0 z-50">

@@ -49,15 +49,18 @@ export interface Settings {
 export interface HabitStore {
   tasks: Task[];
   subjects: string[];
+  pathStages: PathStage[];
   days: Record<string, DayData>;
   path: {
-    current: 'html' | 'js' | 'react' | 'practice';
+    current: string;
     pct: Record<string, number>;
     completedDates: Record<string, string>;
   };
   streaks: Record<string, number>;
   bestStreaks: Record<string, number>;
   settings: Settings;
+  authModalOpen: boolean;
+  setAuthModalOpen: (open: boolean) => void;
   toggleTask: (date: string, taskId: string, status: TaskStatus) => void;
   setMood: (date: string, mood: 1 | 2 | 3 | 4 | 5) => void;
   updatePath: (stageId: string, pct: number) => void;
@@ -67,4 +70,6 @@ export interface HabitStore {
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   setSubjects: (subjects: string[]) => void;
+  setPathStages: (stages: PathStage[]) => void;
+  setCurrentPathStage: (stageId: string) => void;
 }

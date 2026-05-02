@@ -2,15 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useHabitStore } from '@/lib/store';
-import { Sparkles, ArrowRight, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useRouter, usePathname } from 'next/navigation';
+import Cookies from 'js-cookie';
 
 export function AuthModal() {
   const settings = useHabitStore((s) => s.settings);
   const updateSettings = useHabitStore((s) => s.updateSettings);
+  const authModalOpen = useHabitStore((s) => s.authModalOpen);
+  const setAuthModalOpen = useHabitStore((s) => s.setAuthModalOpen);
+  const pathname = usePathname();
+  const router = useRouter();
   
   const [mounted, setMounted] = useState(false);
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,39 +26,26 @@ export function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [greeting, setGreeting] = useState('Welcome');
 
   useEffect(() => {
     setMounted(true);
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good morning.');
+    else if (hour < 18) setGreeting('Good afternoon.');
+    else setGreeting('Good evening.');
   }, []);
 
-  if (!mounted || settings.onboarded) {
+  if (!mounted) {
     return null;
   }
 
-  // Password Strength Logic
-  const calculateStrength = (pass: string) => {
-    let score = 0;
-    if (!pass) return score;
-    if (pass.length >= 8) score += 1;
-    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 1;
-    if (/\d/.test(pass)) score += 1;
-    if (/[^a-zA-Z\d]/.test(pass)) score += 1;
-    return score;
-  };
+  const isProtectedRoute = pathname !== '/';
+  const shouldShow = authModalOpen || (isProtectedRoute && !settings.onboarded);
 
-  const strength = calculateStrength(password);
-  
-  const getStrengthConfig = () => {
-    switch (strength) {
-      case 0: return { label: '', color: 'bg-white/10' };
-      case 1: return { label: 'Weak', color: 'bg-red-500', w: 'w-1/4' };
-      case 2: return { label: 'Fair', color: 'bg-orange-500', w: 'w-2/4' };
-      case 3: return { label: 'Good', color: 'bg-yellow-400', w: 'w-3/4' };
-      case 4: return { label: 'Strong', color: 'bg-emerald-500', w: 'w-full' };
-      default: return { label: '', color: 'bg-white/10', w: 'w-0' };
-    }
-  };
-  const strConfig = getStrengthConfig();
+  if (!shouldShow || settings.onboarded) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,100 +71,138 @@ export function AuthModal() {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
+    // Set cookie for MongoDB API Route identification
+    Cookies.set('grind_user', email.trim(), { expires: 365 });
+
     updateSettings({ 
       name: name.trim() || (mode === 'signin' ? email.split('@')[0] : 'User'), 
       email: email.trim(), 
       onboarded: true 
     });
-  };
 
-  const toggleMode = () => {
-    setMode(prev => prev === 'signin' ? 'signup' : 'signin');
-    setError('');
-    setPassword('');
-    setConfirmPassword('');
+    // Rehydrate the store from MongoDB via custom adapter
+    useHabitStore.persist.rehydrate();
+
+    setAuthModalOpen(false);
+    if (pathname === '/') {
+      router.push('/dashboard');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 min-h-screen overflow-y-auto font-sans">
-      {/* Fullscreen gradient background */}
-      <div className="absolute inset-0 bg-[#0f0c29] bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] -z-10" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 min-h-screen overflow-y-auto font-sans text-white animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm -z-30" onClick={() => setAuthModalOpen(false)} />
       
-      {/* Animated glow orbs */}
-      <div className="absolute top-[20%] left-[20%] w-96 h-96 bg-purple-600/30 rounded-full blur-[120px] mix-blend-screen pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute bottom-[20%] right-[20%] w-[30rem] h-[30rem] bg-indigo-600/20 rounded-full blur-[100px] mix-blend-screen pointer-events-none animate-pulse" style={{ animationDuration: '6s' }} />
+      {/* Mesh Gradient Background matching the image */}
+      <div className="absolute inset-0 bg-[#1a0f0a] -z-20 overflow-hidden">
+        {/* Emerald/Teal Left */}
+        <div className="absolute -left-[10%] top-0 w-[50%] h-[80%] bg-[#008f7a] rounded-full mix-blend-normal filter blur-[160px] opacity-70" />
+        {/* Magenta/Purple Bottom Left */}
+        <div className="absolute -left-[10%] bottom-0 w-[40%] h-[60%] bg-[#4b1d52] rounded-full mix-blend-normal filter blur-[160px] opacity-80" />
+        {/* Deep Orange Right */}
+        <div className="absolute right-0 top-0 w-[60%] h-[100%] bg-[#ff5500] rounded-full mix-blend-normal filter blur-[180px] opacity-70" />
+        {/* Bright Yellow/Orange Center Right */}
+        <div className="absolute right-[5%] top-[20%] w-[40%] h-[60%] bg-[#ffb700] rounded-full mix-blend-normal filter blur-[160px] opacity-60" />
+      </div>
+
+      {/* SVG Grain/Noise Texture overlay */}
+      <div 
+        className="absolute inset-0 -z-10 opacity-[0.12] mix-blend-overlay pointer-events-none" 
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+      ></div>
 
       <div className="w-full max-w-[420px] relative z-10 animate-in fade-in zoom-in-95 duration-500 mt-8 mb-8">
         
-        {/* Glass Card Container */}
-        <div className="backdrop-blur-2xl bg-white/[0.03] border border-white/[0.08] p-8 sm:p-10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
+        {/* Glass Card Container matching image */}
+        <div className="backdrop-blur-2xl bg-[#1c120c]/60 border border-white/10 p-8 sm:p-10 rounded-[2rem] shadow-2xl relative">
           
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/10 border border-white/20 shadow-inner text-white mb-6 backdrop-blur-md">
-              <Sparkles size={24} strokeWidth={1.5} />
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white mb-2">
-              {mode === 'signin' ? 'Welcome back' : 'Create an account'}
+          {/* Close Button */}
+          <button 
+            onClick={() => setAuthModalOpen(false)}
+            className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors"
+          >
+            <X size={20} />
+          </button>
+          
+          {/* Pill Toggle */}
+          <div className="flex bg-black/40 p-1 rounded-full w-max mb-8 border border-white/5 shadow-inner">
+            <button 
+              type="button"
+              onClick={() => setMode('signup')}
+              className={clsx(
+                "px-6 py-2 rounded-full text-xs font-medium transition-all duration-500 ease-out",
+                mode === 'signup' ? "bg-white/15 text-white border border-white/10 shadow-sm" : "text-white/40 hover:text-white"
+              )}
+            >
+              Sign up
+            </button>
+            <button 
+              type="button"
+              onClick={() => setMode('signin')}
+              className={clsx(
+                "px-6 py-2 rounded-full text-xs font-medium transition-all duration-500 ease-out",
+                mode === 'signin' ? "bg-white/15 text-white border border-white/10 shadow-sm" : "text-white/40 hover:text-white"
+              )}
+            >
+              Sign In
+            </button>
+          </div>
+
+          <div className="mb-10">
+            <h1 className="text-[2.25rem] leading-none font-light tracking-tight text-white mb-3">
+              {mode === 'signin' ? greeting : 'Create an account.'}
             </h1>
-            <p className="text-sm text-white/60">
-              {mode === 'signin' ? 'Enter your credentials to access your terminal' : 'Initialize your personal productivity protocol'}
+            <p className="text-[13px] text-white/50 font-light">
+              {mode === 'signin' ? 'Sign in to access your protocol.' : 'Initialize your personal productivity protocol.'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             
             {mode === 'signup' && (
-              <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block text-[11px] font-medium tracking-wide text-white/70">NAME</label>
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/10 transition-all placeholder:text-white/30 backdrop-blur-md"
-                    placeholder="Jane Doe"
+                    className="w-full pl-11 pr-4 py-4 rounded-xl text-sm focus:outline-none transition-all duration-500 ease-out backdrop-blur-md bg-black/40 border border-white/5 text-white focus:border-white/20 focus:bg-black/60 focus:ring-1 focus:ring-white/10 placeholder:text-white/30"
+                    placeholder="Name"
                   />
                 </div>
               </div>
             )}
 
-            <div className="space-y-1">
-              <label className="block text-[11px] font-medium tracking-wide text-white/70">EMAIL</label>
+            <div>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/10 transition-all placeholder:text-white/30 backdrop-blur-md"
-                  placeholder="jane@example.com"
+                  className="w-full pl-11 pr-4 py-4 rounded-xl text-sm focus:outline-none transition-all duration-500 ease-out backdrop-blur-md bg-black/40 border border-white/5 text-white focus:border-white/20 focus:bg-black/60 focus:ring-1 focus:ring-white/10 placeholder:text-white/30"
+                  placeholder="Enter your email"
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="block text-[11px] font-medium tracking-wide text-white/70">PASSWORD</label>
-                {mode === 'signin' && (
-                  <a href="#" className="text-[11px] text-indigo-300 hover:text-indigo-200 transition-colors">Forgot?</a>
-                )}
-              </div>
+            <div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/10 transition-all placeholder:text-white/30 backdrop-blur-md"
-                  placeholder="••••••••"
+                  className="w-full pl-11 pr-11 py-4 rounded-xl text-sm focus:outline-none transition-all duration-500 ease-out backdrop-blur-md bg-black/40 border border-white/5 text-white focus:border-white/20 focus:bg-black/60 focus:ring-1 focus:ring-white/10 placeholder:text-white/30"
+                  placeholder="Password"
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -179,46 +210,18 @@ export function AuthModal() {
             </div>
 
             {mode === 'signup' && (
-              <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block text-[11px] font-medium tracking-wide text-white/70">CONFIRM PASSWORD</label>
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-400/50 focus:bg-white/10 transition-all placeholder:text-white/30 backdrop-blur-md"
-                    placeholder="••••••••"
+                    className="w-full pl-11 pr-4 py-4 rounded-xl text-sm focus:outline-none transition-all duration-500 ease-out backdrop-blur-md bg-black/40 border border-white/5 text-white focus:border-white/20 focus:bg-black/60 focus:ring-1 focus:ring-white/10 placeholder:text-white/30"
+                    placeholder="Confirm Password"
                   />
                 </div>
-                
-                {/* Password Strength Meter */}
-                {password.length > 0 && (
-                  <div className="pt-2 pb-1 space-y-1.5 animate-in fade-in">
-                    <div className="flex gap-1 h-1">
-                      {[1, 2, 3, 4].map((level) => (
-                        <div 
-                          key={level} 
-                          className={clsx(
-                            "flex-1 rounded-full transition-colors duration-300",
-                            strength >= level ? strConfig.color : 'bg-white/10'
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <div className="text-[10px] text-right font-medium text-white/60">
-                      {strConfig.label}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {mode === 'signin' && (
-              <div className="flex items-center gap-2 pt-1 pb-2">
-                <input type="checkbox" id="remember" className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-indigo-500" />
-                <label htmlFor="remember" className="text-xs text-white/60 cursor-pointer">Remember me for 30 days</label>
               </div>
             )}
 
@@ -231,28 +234,15 @@ export function AuthModal() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3 bg-white text-indigo-950 hover:bg-white/90 font-semibold rounded-xl transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              className="group w-full mt-6 py-4 font-medium text-sm rounded-xl transition-all duration-700 ease-out disabled:opacity-70 flex items-center justify-center gap-2 bg-transparent border border-white/20 text-white hover:bg-white/10 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgba(255,255,255,0.08)]"
             >
-              {isLoading ? <Loader2 size={18} className="animate-spin" /> : (
-                <>
-                  {mode === 'signin' ? 'Sign In' : 'Create Account'}
-                  <ArrowRight size={16} />
-                </>
-              )}
+              <span className="relative z-10 flex items-center gap-2 group-hover:scale-105 transition-transform duration-500 ease-out">
+                {isLoading ? <Loader2 size={18} className="animate-spin" /> : (
+                  mode === 'signin' ? 'Sign In' : 'Create an account'
+                )}
+              </span>
             </button>
           </form>
-
-          <div className="text-center mt-6">
-            <p className="text-xs text-white/50">
-              {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}
-              <button 
-                onClick={toggleMode}
-                className="ml-1.5 text-white hover:text-indigo-300 font-medium transition-colors"
-              >
-                {mode === 'signin' ? 'Sign up' : 'Sign in'}
-              </button>
-            </p>
-          </div>
 
         </div>
       </div>
