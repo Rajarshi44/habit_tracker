@@ -74,14 +74,18 @@ export function AuthModal() {
     // Set cookie for MongoDB API Route identification
     Cookies.set('grind_user', email.trim(), { expires: 365 });
 
+    // Rehydrate the store from MongoDB via custom adapter FIRST
+    // This loads their existing data (if any) into the Zustand store
+    await useHabitStore.persist.rehydrate();
+
+    // Now update settings. If sign up, use what they typed. If sign in, keep their stored name or fallback.
+    const currentStoredName = useHabitStore.getState().settings.name;
+    
     updateSettings({ 
-      name: name.trim() || (mode === 'signin' ? email.split('@')[0] : 'User'), 
+      name: mode === 'signup' ? name.trim() : (currentStoredName || email.split('@')[0]), 
       email: email.trim(), 
       onboarded: true 
     });
-
-    // Rehydrate the store from MongoDB via custom adapter
-    useHabitStore.persist.rehydrate();
 
     setAuthModalOpen(false);
     if (pathname === '/') {
