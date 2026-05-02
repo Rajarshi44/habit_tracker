@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useHabitStore } from '@/lib/store';
 import { checkAndTriggerCheckins, SCHEDULE_BLOCKS } from '@/lib/notifications';
 import { format } from 'date-fns';
-import { TASKS } from '@/lib/constants';
 
 export function NotificationEngine() {
   const settings = useHabitStore((s) => s.settings);
   const days = useHabitStore((s) => s.days);
   const streaks = useHabitStore((s) => s.streaks);
+  const tasks = useHabitStore((s) => s.tasks);
   
   useEffect(() => {
     // We only attach this engine if permissions are presumed granted/requested
@@ -22,7 +22,7 @@ export function NotificationEngine() {
       const dateStr = format(now, 'yyyy-MM-dd');
       
       const dayData = days[dateStr] || {};
-      const completedTasksCount = TASKS.filter(t => dayData[t.id] === 'done').length;
+      const completedTasksCount = tasks.filter(t => dayData[t.id] === 'done').length;
       // Get the highest streak among tasks (simplified logic for overarching 'day streak')
       const highestStreak = Math.max(0, ...Object.values(streaks));
       
@@ -61,7 +61,7 @@ export function NotificationEngine() {
     // Check once explicitly on mount
     const dateStr = format(new Date(), 'yyyy-MM-dd');
     const dayData = days[dateStr] || {};
-    const completedCount = TASKS.filter(t => dayData[t.id] === 'done').length;
+    const completedCount = tasks.filter(t => dayData[t.id] === 'done').length;
     const streak = Math.max(0, ...Object.values(streaks));
     checkAndTriggerCheckins(settings, streak, completedCount);
 

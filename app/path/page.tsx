@@ -1,7 +1,7 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { PATH_STAGES, SUBJECTS } from '@/lib/constants';
+import { PATH_STAGES } from '@/lib/constants';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
@@ -10,6 +10,7 @@ import { Check, Lock, ChevronRight, Calendar } from 'lucide-react';
 export default function PathPage() {
   const path = useHabitStore((s) => s.path);
   const updatePath = useHabitStore((s) => s.updatePath);
+  const subjects = useHabitStore((s) => s.subjects) || [];
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -21,9 +22,10 @@ export default function PathPage() {
   
   // Handle positive and negative day differences accurately
   const getSubjectForDate = (date: Date) => {
+    if (subjects.length === 0) return 'None';
     const diff = differenceInDays(date, baseDate);
-    const index = ((diff % 4) + 4) % 4;
-    return SUBJECTS[index];
+    const index = ((diff % subjects.length) + subjects.length) % subjects.length;
+    return subjects[index];
   };
   
   const todaySubject = getSubjectForDate(today);
@@ -133,7 +135,7 @@ export default function PathPage() {
       <section className="space-y-4 pt-4">
         <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)]">College Subject Rotation</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {SUBJECTS.map((subj) => (
+          {subjects.map((subj) => (
             <div 
               key={subj}
               className={clsx(

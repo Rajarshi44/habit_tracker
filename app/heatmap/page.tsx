@@ -1,13 +1,14 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { TASKS } from '@/lib/constants';
+
 import { format, subDays, startOfWeek, isSameMonth } from 'date-fns';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 
 export default function HeatmapPage() {
   const allDays = useHabitStore((s) => s.days);
+  const tasks = useHabitStore((s) => s.tasks);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -21,7 +22,7 @@ export default function HeatmapPage() {
     let done = 0;
     let skip = 0;
     
-    TASKS.forEach(t => {
+    tasks.forEach(t => {
       if (data[t.id] === 'done') done++;
       if (data[t.id] === 'skip') skip++;
     });
@@ -125,7 +126,7 @@ export default function HeatmapPage() {
       <div className="space-y-4 pt-4">
         <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-tertiary)] border-b border-[var(--border)] pb-2 mb-6">Execution Arrays (Per Task)</h2>
         <div className="grid gap-3">
-          {TASKS.map(task => (
+          {tasks.map(task => (
             <div key={task.id} className="p-4 border-b border-x lg:border-l-0 lg:border-r-0 lg:border-x-transparent bg-transparent hover:bg-[var(--surface)] shadow-[inset_4px_0_0_0_var(--surface-2)] overflow-x-auto flex items-center gap-6 transition-colors">
                 <div className="w-40 flex-shrink-0">
                   <span className="text-[13px] font-medium tracking-tight block transition-colors" style={{ color: task.color }}>{task.name}</span>

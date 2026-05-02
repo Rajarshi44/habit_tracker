@@ -7,11 +7,11 @@ import { format } from 'date-fns';
 import { useGemini } from '@/hooks/useGemini';
 import { useStreaks } from '@/hooks/useStreaks';
 import { getCollegeSubject } from '@/lib/calculations';
-import { TASKS } from '@/lib/constants';
 
 export function AICoachCard() {
   const settings = useHabitStore((s) => s.settings);
   const allDays = useHabitStore((s) => s.days);
+  const tasks = useHabitStore((s) => s.tasks);
   const { dayStreak } = useStreaks();
   const { getDailyBriefing, loading } = useGemini();
   const [briefing, setBriefing] = useState<string | null>(null);
@@ -28,12 +28,12 @@ export function AICoachCard() {
     const yesterdayData = allDays[yesterdayStr];
     let yDone = 0;
     if (yesterdayData) {
-      yDone = TASKS.filter(t => yesterdayData[t.id] === 'done').length;
+      yDone = tasks.filter(t => yesterdayData[t.id] === 'done').length;
     }
 
     const { current: todaySubject } = getCollegeSubject(today);
 
-    const taskList = TASKS.map(t => `- ${t.name}`).join('\n');
+    const taskList = tasks.map(t => `- ${t.name}`).join('\n');
     const streakSummary = `${dayStreak}d global streak.`;
 
     const res = await getDailyBriefing({
@@ -45,7 +45,7 @@ export function AICoachCard() {
       currentPathStage: 'Frontend Foundation', // Placeholder Path
       stagePct: 25,
       streakSummary,
-      yesterdayStats: `${yDone}/${TASKS.length} tasks completed.`,
+      yesterdayStats: `${yDone}/${tasks.length} tasks completed.`,
       weekStats: `In progress.`,
       yesterdayMood: yesterdayData?.mood ? `Score ${yesterdayData.mood}/5` : 'Not recorded'
     }, force);

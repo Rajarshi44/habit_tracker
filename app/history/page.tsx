@@ -1,7 +1,6 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { TASKS } from '@/lib/constants';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, parseISO, startOfWeek, endOfWeek } from 'date-fns';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
@@ -9,6 +8,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List as ListIcon }
 
 export default function HistoryPage() {
   const allDays = useHabitStore((s) => s.days);
+  const tasks = useHabitStore((s) => s.tasks);
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -90,7 +90,7 @@ export default function HistoryPage() {
                   {data && (
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex gap-0.5 mt-1">
-                        {TASKS.map((t, i) => (
+                        {tasks.map((t, i) => (
                            <div key={i} className={clsx("w-1 md:w-1.5 h-1 md:h-1.5 rounded-full", data[t.id] === 'done' ? 'bg-emerald-500' : data[t.id] === 'skip' ? 'bg-orange-500' : 'bg-transparent border border-white/10')} />
                         ))}
                       </div>
@@ -111,7 +111,7 @@ export default function HistoryPage() {
                </h3>
                <div className="h-px w-full bg-[var(--border)] my-4" />
                <div className="space-y-3">
-                 {TASKS.map(t => {
+                 {tasks.map(t => {
                     const status = allDays[selectedDay][t.id];
                     if (!status || status === 'none') return null;
                     return (
@@ -136,8 +136,8 @@ export default function HistoryPage() {
           ) : (
             allLoggedDates.map(dateStr => {
               const data = allDays[dateStr];
-              const doneCount = TASKS.filter(t => data[t.id] === 'done').length;
-              const skipCount = TASKS.filter(t => data[t.id] === 'skip').length;
+              const doneCount = tasks.filter(t => data[t.id] === 'done').length;
+              const skipCount = tasks.filter(t => data[t.id] === 'skip').length;
               
               return (
                 <div key={dateStr} className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -149,7 +149,7 @@ export default function HistoryPage() {
                     <div>
                       <h3 className="font-medium text-sm">{format(parseISO(dateStr), 'EEEE')}</h3>
                       <p className="text-xs text-[var(--text-secondary)] font-mono mt-0.5">
-                        {doneCount}/{TASKS.length} completed
+                        {doneCount}/{tasks.length} completed
                         {skipCount > 0 && ` • ${skipCount} skipped`}
                       </p>
                     </div>
@@ -157,7 +157,7 @@ export default function HistoryPage() {
                   
                   <div className="flex items-center gap-4 text-sm bg-[var(--surface-2)] px-3 py-2 rounded-lg md:bg-transparent md:px-0">
                      <div className="flex gap-1">
-                        {TASKS.map((t, i) => (
+                        {tasks.map((t, i) => (
                            <div key={i} title={t.name} className={clsx("w-2 h-2 md:w-3 md:h-3 rounded-sm", data[t.id] === 'done' ? 'bg-emerald-500' : data[t.id] === 'skip' ? 'bg-orange-500' : 'bg-[var(--surface-3)]')} />
                         ))}
                      </div>

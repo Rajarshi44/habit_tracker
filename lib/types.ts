@@ -3,6 +3,7 @@ export type TaskStatus = 'done' | 'skip' | 'none';
 export interface DayData {
   [taskId: string]: TaskStatus | string | number | undefined;
   clg_subj?: string;
+  mood?: 1 | 2 | 3 | 4 | 5;
   note?: string;
 }
 
@@ -44,6 +45,8 @@ export interface Settings {
 }
 
 export interface HabitStore {
+  tasks: Task[];
+  subjects: string[];
   days: Record<string, DayData>;
   path: {
     current: 'html' | 'js' | 'react' | 'practice';
@@ -54,6 +57,12 @@ export interface HabitStore {
   bestStreaks: Record<string, number>;
   settings: Settings;
   toggleTask: (date: string, taskId: string, status: TaskStatus) => void;
+  setMood: (date: string, mood: 1 | 2 | 3 | 4 | 5) => void;
   updatePath: (stageId: string, pct: number) => void;
   updateSettings: (partial: Partial<Settings>) => void;
+  setTasks: (tasks: Task[]) => void;
+  addTask: (task: Task) => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => void;
+  deleteTask: (taskId: string) => void;
+  setSubjects: (subjects: string[]) => void;
 }

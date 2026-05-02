@@ -1,7 +1,7 @@
 'use client';
 
 import { useHabitStore } from '@/lib/store';
-import { TASKS, PATH_STAGES } from '@/lib/constants';
+import { PATH_STAGES } from '@/lib/constants';
 import { TaskCard } from '@/components/ui/TaskCard';
 import { AICoachCard } from '@/components/ui/AICoachCard';
 import { QUOTES } from '@/lib/quotes';
@@ -12,11 +12,15 @@ import { useStreaks } from '@/hooks/useStreaks';
 import { useGemini } from '@/hooks/useGemini';
 import { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
+import { getCollegeSubject } from '@/lib/calculations';
 
 export default function TodayView() {
   const settings = useHabitStore((s) => s.settings);  
   const allDays = useHabitStore((s) => s.days);
   const pathState = useHabitStore((s) => s.path);
+  const tasks = useHabitStore((s) => s.tasks);
+  const subjects = useHabitStore((s) => s.subjects);
+  const setMood = useHabitStore((s) => s.setMood);
   const now = new Date();
   const dateStr = format(now, 'yyyy-MM-dd');
   const { dayStreak } = useStreaks();
@@ -47,13 +51,13 @@ export default function TodayView() {
   
   // Calculate done tasks for today
   const dayData = allDays[dateStr] || {};
-  const doneCount = TASKS.filter(t => dayData[t.id] === 'done').length;
-  const pct = (doneCount / TASKS.length) * 100;
+  const doneCount = tasks.filter(t => dayData[t.id] === 'done').length;
+  const pct = tasks.length > 0 ? (doneCount / tasks.length) * 100 : 0;
   
   // Calculate best day stats
   let bestDayCount = 0;
   Object.values(allDays).forEach(day => {
-    const dailyDoneCount = TASKS.filter(t => day[t.id] === 'done').length;
+    const dailyDoneCount = tasks.filter(t => day[t.id] === 'done').length;
     if (dailyDoneCount > bestDayCount) {
       bestDayCount = dailyDoneCount;
     }
@@ -129,7 +133,7 @@ export default function TodayView() {
           <span className="text-[var(--text-secondary)] text-[10px] font-mono uppercase tracking-[0.15em] mb-2">Bypassed</span>
           <div className="flex items-baseline gap-1">
             <span className="font-bold text-3xl tabular-nums text-orange-500">
-              {TASKS.filter(t => dayData[t.id] === 'skip').length}
+              {tasks.filter(t => dayData[t.id] === 'skip').length}
             </span>
             <span className="text-sm font-mono text-[var(--text-secondary)]">TASKS</span>
           </div>
@@ -148,10 +152,14 @@ export default function TodayView() {
       <section className="space-y-4">
         <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-tertiary)] border-b border-[var(--border)] pb-2">Active Protocol</h2>
         <div className="grid gap-3">
-          {TASKS.map((task) => {
+          {tasks.map((task) => {
           const displayTask = { ...task };
           if (task.path) {
             displayTask.name = `Web Dev: ${currentStageName}`;
+          }
+          if (task.rotating) {
+            const { current } = getCollegeSubject(now);
+            displayTask.subtitle = current;
           }
           return <TaskCard key={task.id} task={displayTask} dateStr={dateStr} />;
         })}
@@ -159,7 +167,42 @@ export default function TodayView() {
       </section>
 
       {/* FOOTER WIDGETS (BENTO 2.0) */}
-      <div className="pt-8 border-t border-[var(--border)]">
+      <div className="grid md:grid-cols-[1fr_2fr] gap-6 pt-8 border-t border-[var(--border)]">
+        {/* MOOD TRACKER */}
+        <div className="flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Systems Check</h3>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">Log your cognitive load & physical state today.</p>
+          </div>
+          <div className="flex gap-2 mt-6">
+            {[
+              { val: 1, label: 'LOW' },
+              { val: 2, label: 'SUB' },
+              { val: 3, label: 'AVG' },
+              { val: 4, label: 'OPT' },
+              { val: 5, label: 'MAX' }
+            ].map((level) => {
+              const currentMood = dayData.mood;
+              const isSelected = currentMood === level.val;
+              return (
+                <button 
+                  key={level.val}
+                  onClick={() => setMood(dateStr, level.val as any)}
+                  className={clsx(
+                    "flex-1 flex flex-col items-center justify-center py-3 rounded border transition-all duration-300",
+                    isSelected 
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 shadow-[inset_0_1px_0_rgba(16,185,129,0.2)]" 
+                      : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--border-bright)] hover:bg-[var(--surface-3)] hover:-translate-y-[1px]"
+                  )}
+                >
+                  <span className="font-mono font-bold text-lg leading-none">{level.val}</span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest opacity-50 mt-1">{level.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* QUOTE MODULE */}
         <div className="relative group overflow-hidden border border-[var(--border)] bg-[var(--surface)] rounded flex flex-col justify-center p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />

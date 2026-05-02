@@ -5,7 +5,6 @@ import { useHabitStore } from '@/lib/store';
 import { useGemini } from '@/hooks/useGemini';
 import { Sparkles, Loader2, RefreshCw, BarChart2, TrendingUp, Activity, Award } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, parseISO } from 'date-fns';
-import { TASKS } from '@/lib/constants';
 import { useStreaks } from '@/hooks/useStreaks';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -15,6 +14,7 @@ import {
 export default function InsightsPage() {
   const [mounted, setMounted] = useState(false);
   const allDays = useHabitStore((s) => s.days);
+  const tasks = useHabitStore((s) => s.tasks);
   const { taskStreaks, bestStreaks, dayStreak } = useStreaks();
   const { getWeeklyReview, loading } = useGemini();
   const [review, setReview] = useState<string | null>(null);
@@ -25,10 +25,10 @@ export default function InsightsPage() {
   const stats = useMemo(() => {
     let totalSessions = 0;
     const taskCounts: Record<string, { done: number, skip: number }> = {};
-    TASKS.forEach(t => taskCounts[t.id] = { done: 0, skip: 0 });
+    tasks.forEach(t => taskCounts[t.id] = { done: 0, skip: 0 });
 
     Object.values(allDays).forEach(day => {
-      TASKS.forEach(t => {
+      tasks.forEach(t => {
         if (day[t.id] === 'done') {
           totalSessions++;
           taskCounts[t.id].done++;
@@ -41,7 +41,7 @@ export default function InsightsPage() {
     let mostConsistent = null;
     let mostSkipped = null;
 
-    TASKS.forEach(t => {
+    tasks.forEach(t => {
       if (taskCounts[t.id].done > 0 && (!mostConsistent || taskCounts[t.id].done > taskCounts[mostConsistent.id].done)) {
         mostConsistent = t;
       }
@@ -51,7 +51,7 @@ export default function InsightsPage() {
     });
 
     return { totalSessions, taskCounts, mostConsistent, mostSkipped };
-  }, [allDays]);
+  }, [allDays, tasks]);
 
   // Chart 1: Weekly completion %
   const weeklyData = useMemo(() => {
@@ -61,25 +61,25 @@ export default function InsightsPage() {
       const d = subDays(today, i);
       const dStr = format(d, 'yyyy-MM-dd');
       const dayData = allDays[dStr] || {};
-      const done = TASKS.filter(t => dayData[t.id] === 'done').length;
+      const done = tasks.filter(t => dayData[t.id] === 'done').length;
       data.push({
         name: format(d, 'EEE'),
-        completion: TASKS.length > 0 ? Math.round((done / TASKS.length) * 100) : 0
+        completion: tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0
       });
     }
     return data;
-  }, [allDays]);
+  }, [allDays, tasks]);
 
   // Chart 2 & 3: Task Breakdown & Streaks
   const taskChartData = useMemo(() => {
-    return TASKS.map(t => ({
+    return tasks.map(t => ({
       name: t.name,
-      done: stats.taskCounts[t.id].done,
-      skip: stats.taskCounts[t.id].skip,
+      done: stats.taskCounts[t.id]?.done || 0,
+      skip: stats.taskCounts[t.id]?.skip || 0,
       currentStreak: taskStreaks[t.id] || 0,
       bestStreak: bestStreaks[t.id] || 0
     }));
-  }, [stats, taskStreaks, bestStreaks]);
+  }, [stats, taskStreaks, bestStreaks, tasks]);
 
   const fetchReview = async (force = false) => {
     const today = new Date();
@@ -91,9 +91,9 @@ export default function InsightsPage() {
     for (let i = 0; i < 7; i++) {
         const dStr = format(subDays(today, i), 'yyyy-MM-dd');
         const dayData = allDays[dStr];
-        weekTotal += TASKS.length;
+        weekTotal += tasks.length;
         if (dayData) {
-            weekDone += TASKS.filter(t => dayData[t.id] === 'done').length;
+            weekDone += tasks.filter(t => dayData[t.id] === 'done').length;
         }
     }
 

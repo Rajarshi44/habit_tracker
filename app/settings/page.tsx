@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/Switch';
 import { testNotification, requestNotificationPermission } from '@/lib/notifications';
 import { Bell, Briefcase, Zap, Moon, Orbit } from 'lucide-react';
 import { useState } from 'react';
+import { RoutineConfig } from '@/components/RoutineConfig';
 
 export default function SettingsView() {
   const settings = useHabitStore((s) => s.settings);
@@ -24,6 +25,13 @@ export default function SettingsView() {
         <h1 className="text-2xl font-bold tracking-tight">Settings.</h1>
         <p className="text-[var(--text-secondary)] font-mono text-sm mt-1">Configure your environment.</p>
       </header>
+
+      <section className="space-y-6">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)] flex items-center gap-2">
+          <Briefcase size={14} /> Routine Configuration
+        </h2>
+        <RoutineConfig />
+      </section>
 
       <section className="space-y-6">
         <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--text-tertiary)] flex items-center gap-2">

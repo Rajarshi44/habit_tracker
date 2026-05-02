@@ -1,5 +1,5 @@
 import { differenceInDays, parseISO, startOfDay, format, subDays } from 'date-fns';
-import { TASKS, SUBJECTS } from './constants';
+import { useHabitStore } from './store';
 import { DayData, TaskStatus } from './types';
 
 const BASE_DATE = new Date(2026, 4, 2); // May 2, 2026
@@ -8,19 +8,22 @@ export function getCollegeSubject(queryDate: Date = new Date()): { current: stri
   const qd = startOfDay(queryDate);
   const bd = startOfDay(BASE_DATE);
   const dayDiff = differenceInDays(qd, bd);
-  const currentIdx = ((dayDiff % 4) + 4) % 4; // handles negative numbers correctly
-  const nextIdx = (currentIdx + 1) % 4;
+  const subjects = useHabitStore.getState().subjects || [];
+  if (subjects.length === 0) return { current: 'None', next: 'None' };
+  const currentIdx = ((dayDiff % subjects.length) + subjects.length) % subjects.length;
+  const nextIdx = (currentIdx + 1) % subjects.length;
   
   return {
-    current: SUBJECTS[currentIdx],
-    next: SUBJECTS[nextIdx]
+    current: subjects[currentIdx],
+    next: subjects[nextIdx]
   };
 }
 
 export function calculateTaskStreaks(days: Record<string, DayData>, targetDate: Date = new Date()) {
   const streaks: Record<string, number> = {};
   
-  TASKS.forEach(task => {
+  const tasks = useHabitStore.getState().tasks || [];
+  tasks.forEach(task => {
     let currentStreak = 0;
     let daysBack = 0;
     // Look back up to 365 days
@@ -61,7 +64,8 @@ export function calculateDayStreak(days: Record<string, DayData>, targetDate: Da
 
     let doneCount = 0;
     let skipCount = 0;
-    TASKS.forEach(task => {
+    const tasks = useHabitStore.getState().tasks || [];
+    tasks.forEach(task => {
       const status = dayData[task.id] as TaskStatus;
       if (status === 'done') doneCount++;
       if (status === 'skip') skipCount++;

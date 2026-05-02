@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DayData, TaskStatus } from './types';
-import { TASKS, SUBJECTS } from './constants';
+
 import { format } from 'date-fns';
 
 const STRENGTH = {
